@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nhập Sản Lượng</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f5f7; margin:0; padding:20px; }
+    .card { background:#fff; max-width:600px; margin:0 auto; padding:24px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+    h2 { margin-top:0; color:#1a2b4c; }
+    fieldset { border:1px solid #dde1e6; border-radius:8px; margin-bottom:16px; padding:12px 16px; }
+    legend { font-weight:bold; color:#1a2b4c; padding:0 6px; }
+    label { display:block; font-size:13px; margin-top:10px; margin-bottom:4px; color:#333; }
+    input, select, textarea {
+      width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-size:14px;
+    }
+    input[readonly] { background:#f0f0f0; color:#555; }
+    .row2 { display:flex; gap:10px; }
+    .row2 > div { flex:1; }
+    button {
+      margin-top:20px; width:100%; padding:12px; background:#1a2b4c; color:#fff;
+      border:none; border-radius:6px; font-size:15px; cursor:pointer;
+    }
+    button:disabled { background:#999; }
+    #msg { margin-top:12px; text-align:center; font-size:14px; }
+    #existingBanner {
+      display:none; background:#fff8e1; border:1px solid #ffca28; color:#8a6d00;
+      padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:14px;
+    }
+    .btn-row { display:flex; gap:10px; }
+    .btn-row button { flex:1; }
+    #btnDelete { background:#c62828; display:none; }
+    #btnDelete:disabled { background:#999; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>📋 Nhập Sản Lượng Hàng Ngày</h2>
+
+    <div id="existingBanner">
+      ⚠️ <b>Ngày + điểm bán này đã có dữ liệu.</b> Thông tin cũ đã được nạp lại bên dưới — bạn có thể sửa rồi bấm "Cập nhật", hoặc bấm "Xóa dữ liệu" nếu muốn xóa.
+    </div>
+
+    <form id="salesForm">
+      <fieldset>
+        <legend>Thông tin ca</legend>
+        <div class="row2">
+          <div>
+            <label>Ngày *</label>
+            <input type="date" id="ngay" required>
+          </div>
+          <div>
+            <label>Vùng *</label>
+            <select id="vung" required onchange="updateDiemBan()">
+              <option value="">-- Chọn Vùng --</option>
+            </select>
+          </div>
+        </div>
+        <label>Điểm bán *</label>
+        <select id="diemBan" required onchange="updateDiaChi()">
+          <option value="">-- Chọn Vùng trước --</option>
+        </select>
+        <label>Địa chỉ</label>
+        <input type="text" id="diaChi" readonly placeholder="Tự điền theo điểm bán">
+        <label>Khách tiếp cận</label>
+        <input type="number" id="khachTiepCan" min="0" placeholder="Số khách">
+      </fieldset>
+
+      <fieldset>
+        <legend>Bán - thùng 24</legend>
+        <div class="row2">
+          <div><label>Premium</label><input type="number" id="t24_premium" min="0" value="0"></div>
+          <div><label>Sleek 330ml</label><input type="number" id="t24_sleek" min="0" value="0"></div>
+        </div>
+        <div class="row2">
+          <div><label>Trúc Bạch</label><input type="number" id="t24_trucbach" min="0" value="0"></div>
+          <div><label>Bia hơi 500ml</label><input type="number" id="t24_biahoi" min="0" value="0"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Bán - lon lẻ</legend>
+        <div class="row2">
+          <div><label>Premium</label><input type="number" id="le_premium" min="0" value="0"></div>
+          <div><label>Sleek 330ml</label><input type="number" id="le_sleek" min="0" value="0"></div>
+        </div>
+        <div class="row2">
+          <div><label>Trúc Bạch</label><input type="number" id="le_trucbach" min="0" value="0"></div>
+          <div><label>Bia hơi 500ml</label><input type="number" id="le_biahoi" min="0" value="0"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Quà tặng - lon</legend>
+        <div class="row2">
+          <div><label>Premium</label><input type="number" id="qt_premium" min="0" value="0"></div>
+          <div><label>Sleek 330ml</label><input type="number" id="qt_sleek" min="0" value="0"></div>
+        </div>
+        <label>Tổng quà tặng</label>
+        <input type="number" id="tongQuaTang" min="0" value="0">
+      </fieldset>
+
+      <fieldset>
+        <legend>Ghi chú</legend>
+        <textarea id="ghiChu" rows="2"></textarea>
+      </fieldset>
+
+      <div class="btn-row">
+        <button type="submit" id="submitBtn">Gửi báo cáo</button>
+        <button type="button" id="btnDelete" onclick="xoaDuLieu()">Xóa dữ liệu</button>
+      </div>
+      <div id="msg"></div>
+    </form>
+  </div>
+
+<script>
+  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwQAvhnrRRGqMz_5h8nf0j1rjAQ5EB1U4hF4FXkEE01ZXjGo-2VDeYbtdLeHvK_RRBa/exec';
+
+  let danhSach = {};
+  let existingRowNumber = null;
+
+  function callGet(action, params) {
+    const url = new URL(WEB_APP_URL);
+    url.searchParams.set('action', action);
+    Object.keys(params || {}).forEach(k => url.searchParams.set(k, params[k]));
+    return fetch(url.toString())
+      .then(r => r.json())
+      .then(res => {
+        if (!res.success) throw new Error(res.error || 'Lỗi không xác định');
+        return res.data;
+      });
+  }
+
+  function callPost(action, payload) {
+    return fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: action }, payload))
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (!res.success) throw new Error(res.error || 'Lỗi không xác định');
+        return res.data;
+      });
+  }
+
+  callGet('getDanhSach').then(function(data) {
+    danhSach = data;
+    const vungSelect = document.getElementById('vung');
+    Object.keys(data).sort().forEach(function(vung) {
+      const opt = document.createElement('option');
+      opt.value = vung;
+      opt.textContent = vung;
+      vungSelect.appendChild(opt);
+    });
+  }).catch(function(err) {
+    document.getElementById('msg').style.color = 'red';
+    document.getElementById('msg').textContent = 'Lỗi tải danh sách: ' + err.message;
+  });
+
+  function updateDiemBan() {
+    const vung = document.getElementById('vung').value;
+    const diemBanSelect = document.getElementById('diemBan');
+    diemBanSelect.innerHTML = '<option value="">-- Chọn Điểm bán --</option>';
+    (danhSach[vung] || []).forEach(function(item) {
+      const opt = document.createElement('option');
+      opt.value = item.ten;
+      opt.dataset.diaChi = item.diaChi;
+      opt.textContent = item.ten;
+      diemBanSelect.appendChild(opt);
+    });
+    document.getElementById('diaChi').value = '';
+    resetCheMoHinhThem();
+    kiemTraDuLieuCu();
+  }
+
+  function updateDiaChi() {
+    const diemBanSelect = document.getElementById('diemBan');
+    const selected = diemBanSelect.options[diemBanSelect.selectedIndex];
+    document.getElementById('diaChi').value = selected ? (selected.dataset.diaChi || '') : '';
+    kiemTraDuLieuCu();
+  }
+
+  document.getElementById('ngay').addEventListener('change', kiemTraDuLieuCu);
+
+  function kiemTraDuLieuCu() {
+    const ngay = document.getElementById('ngay').value;
+    const vung = document.getElementById('vung').value;
+    const diemBan = document.getElementById('diemBan').value;
+
+    if (!ngay || !vung || !diemBan) {
+      resetCheMoHinhThem();
+      return;
+    }
+
+    document.getElementById('msg').textContent = 'Đang kiểm tra dữ liệu...';
+    document.getElementById('msg').style.color = '#555';
+
+    callGet('checkExistingData', { ngay: ngay, vung: vung, diemBan: diemBan })
+      .then(function(result) {
+        document.getElementById('msg').textContent = '';
+        if (result && result.found) {
+          napDuLieuCu(result.data, result.rowNumber);
+        } else {
+          resetCheMoHinhThem();
+        }
+      })
+      .catch(function(err) {
+        document.getElementById('msg').style.color = 'red';
+        document.getElementById('msg').textContent = 'Lỗi kiểm tra: ' + err.message;
+      });
+  }
+
+  function napDuLieuCu(data, rowNumber) {
+    existingRowNumber = rowNumber;
+
+    document.getElementById('khachTiepCan').value = data.khachTiepCan || 0;
+    document.getElementById('t24_premium').value = data.t24_premium || 0;
+    document.getElementById('t24_sleek').value = data.t24_sleek || 0;
+    document.getElementById('t24_trucbach').value = data.t24_trucbach || 0;
+    document.getElementById('t24_biahoi').value = data.t24_biahoi || 0;
+    document.getElementById('le_premium').value = data.le_premium || 0;
+    document.getElementById('le_sleek').value = data.le_sleek || 0;
+    document.getElementById('le_trucbach').value = data.le_trucbach || 0;
+    document.getElementById('le_biahoi').value = data.le_biahoi || 0;
+    document.getElementById('qt_premium').value = data.qt_premium || 0;
+    document.getElementById('qt_sleek').value = data.qt_sleek || 0;
+    document.getElementById('tongQuaTang').value = data.tongQuaTang || 0;
+    document.getElementById('ghiChu').value = data.ghiChu || '';
+    if (data.diaChi) document.getElementById('diaChi').value = data.diaChi;
+
+    document.getElementById('existingBanner').style.display = 'block';
+    document.getElementById('submitBtn').textContent = 'Cập nhật dữ liệu';
+    document.getElementById('btnDelete').style.display = 'block';
+  }
+
+  function resetCheMoHinhThem() {
+    existingRowNumber = null;
+    document.getElementById('existingBanner').style.display = 'none';
+    document.getElementById('submitBtn').textContent = 'Gửi báo cáo';
+    document.getElementById('btnDelete').style.display = 'none';
+  }
+
+  document.getElementById('salesForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const msg = document.getElementById('msg');
+    btn.disabled = true;
+    msg.textContent = 'Đang gửi...';
+    msg.style.color = '#555';
+
+    const val = id => document.getElementById(id).value;
+    const num = id => Number(document.getElementById(id).value || 0);
+
+    const formData = {
+      rowNumber: existingRowNumber,
+      ngay: val('ngay'),
+      vung: val('vung'),
+      diemBan: val('diemBan'),
+      diaChi: val('diaChi'),
+      khachTiepCan: num('khachTiepCan'),
+      t24_premium: num('t24_premium'),
+      t24_sleek: num('t24_sleek'),
+      t24_trucbach: num('t24_trucbach'),
+      t24_biahoi: num('t24_biahoi'),
+      le_premium: num('le_premium'),
+      le_sleek: num('le_sleek'),
+      le_trucbach: num('le_trucbach'),
+      le_biahoi: num('le_biahoi'),
+      qt_premium: num('qt_premium'),
+      qt_sleek: num('qt_sleek'),
+      tongQuaTang: num('tongQuaTang'),
+      ghiChu: val('ghiChu')
+    };
+
+    callPost('submitForm', { formData: formData })
+      .then(function(result) {
+        msg.style.color = 'green';
+        msg.textContent = result.updated ? '✅ Đã cập nhật dữ liệu thành công!' : '✅ Đã gửi báo cáo thành công!';
+        document.getElementById('salesForm').reset();
+        document.getElementById('diemBan').innerHTML = '<option value="">-- Chọn Vùng trước --</option>';
+        resetCheMoHinhThem();
+        btn.disabled = false;
+      })
+      .catch(function(err) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Lỗi: ' + err.message;
+        btn.disabled = false;
+      });
+  });
+
+  function xoaDuLieu() {
+    if (!existingRowNumber) return;
+    if (!confirm('Bạn chắc chắn muốn xóa dữ liệu của ngày/điểm bán này?')) return;
+
+    const btnDelete = document.getElementById('btnDelete');
+    const msg = document.getElementById('msg');
+    btnDelete.disabled = true;
+    msg.textContent = 'Đang xóa...';
+    msg.style.color = '#555';
+
+    callPost('deleteRow', { rowNumber: existingRowNumber })
+      .then(function() {
+        msg.style.color = 'green';
+        msg.textContent = '🗑️ Đã xóa dữ liệu.';
+        document.getElementById('salesForm').reset();
+        document.getElementById('diemBan').innerHTML = '<option value="">-- Chọn Vùng trước --</option>';
+        resetCheMoHinhThem();
+        btnDelete.disabled = false;
+      })
+      .catch(function(err) {
+        msg.style.color = 'red';
+        msg.textContent = '❌ Lỗi xóa: ' + err.message;
+        btnDelete.disabled = false;
+      });
+  }
+</script>
+</body>
+</html>
