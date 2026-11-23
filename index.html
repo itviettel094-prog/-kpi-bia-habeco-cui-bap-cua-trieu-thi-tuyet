@@ -67,10 +67,69 @@
     .toast.out { animation: toastOut .4s ease forwards; }
     @keyframes toastIn { from { transform:translateX(-30px); opacity:0; } to { transform:translateX(0); opacity:1; } }
     @keyframes toastOut { from { transform:translateX(0); opacity:1; } to { transform:translateX(-120%); opacity:0; } }
+      /* Admin */
+    #gearBtn { position:fixed; top:12px; right:12px; z-index:10001; width:42px; height:42px; margin:0; padding:0; border-radius:50%; background:#fff; color:var(--green); font-size:20px; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+    #lockScreen { display:none; position:fixed; inset:0; z-index:10000; background:#f4f5f7; align-items:center; justify-content:center; padding:24px; text-align:center; }
+    #lockScreen .box { max-width:420px; background:#fff; padding:28px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.15); color:#c62828; }
+    #adminModal { display:none; position:fixed; inset:0; z-index:10002; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:20px; }
+    #adminModal .box { background:#fff; width:100%; max-width:380px; max-height:90vh; overflow:auto; padding:22px; border-radius:10px; text-align:center; }
+    #btnCloseAdmin { background:#999; margin-top:14px; }
+    .switchRow { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 0; padding:12px; border:1px solid #dde1e6; border-radius:8px; text-align:left; }
+    .switch { position:relative; width:54px; height:30px; flex:none; margin:0; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; inset:0; background:#c62828; border-radius:30px; cursor:pointer; transition:.2s; }
+    .slider:before { content:""; position:absolute; width:24px; height:24px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+    .switch input:checked + .slider { background:var(--green); }
+    .switch input:checked + .slider:before { transform:translateX(24px); }
+    .statGrid { display:flex; gap:8px; }
+    .statBox { flex:1; background:#f4f5f7; border-radius:8px; padding:10px; font-size:12px; }
+    .statBox b { display:block; font-size:22px; }
+    #onlineList { text-align:left; font-size:13px; margin-top:12px; }
+    #onlineList div { padding:4px 0; border-bottom:1px solid #eee; }
   </style>
+  
 </head>
 <body>
   <div id="toastWrap"></div>
+
+  <button type="button" id="gearBtn" onclick="openAdmin()" title="Quản trị">⚙️</button>
+
+  <div id="lockScreen">
+    <div class="box">
+      <h2 style="color:#c62828">🔒 Đã hết hạn truy cập</h2>
+      <p>Vui lòng liên hệ Zalo hoacomay <b>0988.068.913</b> để được hỗ trợ.</p>
+    </div>
+  </div>
+
+  <div id="adminModal">
+    <div class="box">
+      <h3 style="margin-top:0">⚙️ Quản trị</h3>
+      <div id="adminLogin">
+        <p style="font-size:13px">Mã xác thực sẽ được gửi về email admin</p>
+        <button type="button" id="btnSendOtp" onclick="guiOtp()" style="margin-top:0">Gửi mã OTP về email</button>
+        <div id="otpBox" style="display:none">
+          <input type="text" id="otpInput" inputmode="numeric" maxlength="6" placeholder="Nhập mã 6 số" style="margin-top:12px">
+          <button type="button" onclick="xacNhanOtp()">Xác nhận</button>
+        </div>
+        
+      </div>
+      <div id="adminPanel" style="display:none">
+        <p><b id="adminHello"></b></p>
+        <div class="switchRow">
+          <div><b>Trạng thái trang web</b><div id="siteStatusText" style="font-size:13px"></div></div>
+          <label class="switch"><input type="checkbox" id="siteSwitch" onchange="adminDoiTrangThai()"><span class="slider"></span></label>
+        </div>
+        <div class="statGrid">
+          <div class="statBox"><b id="stOnline">0</b>Đang online</div>
+          <div class="statBox"><b id="stToday">0</b>Hôm nay</div>
+          <div class="statBox"><b id="stTotal">0</b>Tổng lượt</div>
+        </div>
+        <div id="onlineList"></div>
+      </div>
+      <div id="adminMsg" style="margin-top:10px;font-size:13px;color:red"></div>
+      <button type="button" id="btnCloseAdmin" onclick="closeAdmin()">Đóng</button>
+    </div>
+  </div>
 
   <div class="card">
     <h2>📋 Nhập Sản Lượng Hàng Ngày</h2>
@@ -230,7 +289,7 @@
     return fetch(url.toString())
       .then(r => r.json())
       .then(res => {
-        if (!res.success) throw new Error(res.error || 'Lỗi không xác định');
+        if (!res.success) { if (res.error === 'SITE_DISABLED') showLock(); throw new Error(res.error === 'SITE_DISABLED' ? 'Trang web đang tắt' : (res.error || 'Lỗi không xác định')); }
         return res.data;
       });
   }
@@ -243,7 +302,7 @@
     })
       .then(r => r.json())
       .then(res => {
-        if (!res.success) throw new Error(res.error || 'Lỗi không xác định');
+        if (!res.success) { if (res.error === 'SITE_DISABLED') showLock(); throw new Error(res.error === 'SITE_DISABLED' ? 'Trang web đang tắt' : (res.error || 'Lỗi không xác định')); }
         return res.data;
       });
   }
@@ -439,6 +498,147 @@
         msg.textContent = '❌ Lỗi xóa: ' + err.message;
         btnDelete.disabled = false;
       });
+  }
+</script>
+<script>
+  // ================= ADMIN + THEO DÕI =================
+  const GOOGLE_CLIENT_ID = 'DAN_CLIENT_ID_VAO_DAY.apps.googleusercontent.com';
+  let adminToken = null, adminTimer = null, gsiReady = false;
+  try { adminToken = sessionStorage.getItem('atk'); } catch (e) {}
+
+  function showLock() { document.getElementById('lockScreen').style.display = 'flex'; }
+
+  // ---- Báo online + đếm lượt truy cập ----
+  let clientId = null;
+  try { clientId = sessionStorage.getItem('cid'); } catch (e) {}
+  let newVisit = !clientId;
+  if (!clientId) {
+    clientId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try { sessionStorage.setItem('cid', clientId); } catch (e) {}
+  }
+
+  function ping() {
+    callPost('ping', {
+      clientId: clientId, newVisit: newVisit,
+      vung: document.getElementById('vung').value,
+      diemBan: document.getElementById('diemBan').value
+    }).then(function(r) {
+      newVisit = false;
+      if (!r.enabled) showLock();
+      else if (document.getElementById('lockScreen').style.display === 'flex') location.reload();
+    }).catch(function() {});
+  }
+  ping();
+  setInterval(ping, 60000);
+
+  // ---- Admin ----
+  function adminMsg(text, ok) {
+    const m = document.getElementById('adminMsg');
+    m.style.color = ok ? '' : 'red';
+    m.textContent = text || '';
+  }
+
+  function openAdmin() {
+    adminMsg('');
+    document.getElementById('adminModal').style.display = 'flex';
+    if (adminToken) { taiThongKe(); adminTimer = setInterval(taiThongKe, 10000); }
+    else hienDangNhap();
+  }
+
+  function closeAdmin() {
+    document.getElementById('adminModal').style.display = 'none';
+    clearInterval(adminTimer);
+  }
+
+  function hienDangNhap() {
+    document.getElementById('adminLogin').style.display = 'block';
+    document.getElementById('adminPanel').style.display = 'none';
+    return;
+    if (!gsiReady) {
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogle });
+      google.accounts.id.renderButton(document.getElementById('gBtn'), { theme: 'outline', size: 'large', locale: 'vi' });
+      gsiReady = true;
+    }
+  }
+
+  function guiOtp() {
+    const b = document.getElementById('btnSendOtp');
+    b.disabled = true;
+    adminMsg('Đang gửi mã...', true);
+    callPost('adminSendOtp', {}).then(function() {
+      adminMsg('Đã gửi mã về email admin. Kiểm tra hộp thư (cả mục Spam).', true);
+      document.getElementById('otpBox').style.display = 'block';
+      setTimeout(function() { b.disabled = false; b.textContent = 'Gửi lại mã'; }, 60000);
+    }).catch(function(err) { adminMsg(err.message); b.disabled = false; });
+  }
+
+  function xacNhanOtp() {
+    const code = document.getElementById('otpInput').value;
+    adminMsg('Đang xác thực...', true);
+    callPost('adminLogin', { code: code }).then(function(s) {
+      adminToken = s.token;
+      try { sessionStorage.setItem('atk', s.token); } catch (e) {}
+      document.getElementById('otpInput').value = '';
+      document.getElementById('otpBox').style.display = 'none';
+      adminMsg('');
+      veAdmin(s);
+      clearInterval(adminTimer);
+      adminTimer = setInterval(taiThongKe, 10000);
+    }).catch(function(err) { adminMsg(err.message); });
+  }
+
+  function onGoogle(resp) {
+    adminMsg('Đang xác thực...', true);
+    callPost('adminLogin', { idToken: resp.credential }).then(function(s) {
+      adminToken = s.token;
+      try { sessionStorage.setItem('atk', s.token); } catch (e) {}
+      adminMsg('');
+      veAdmin(s);
+      clearInterval(adminTimer);
+      adminTimer = setInterval(taiThongKe, 10000);
+    }).catch(function(err) { adminMsg(err.message); });
+  }
+
+  function taiThongKe() {
+    callPost('adminStatus', { token: adminToken }).then(veAdmin).catch(function(err) {
+      if (/hết hạn/.test(err.message)) {
+        adminToken = null;
+        try { sessionStorage.removeItem('atk'); } catch (e) {}
+        clearInterval(adminTimer);
+        hienDangNhap();
+      }
+      adminMsg(err.message);
+    });
+  }
+
+  function veAdmin(s) {
+    document.getElementById('adminLogin').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    document.getElementById('adminHello').textContent = '👋 Xin chào admin! (' + s.email + ')';
+    document.getElementById('siteSwitch').checked = s.enabled;
+    document.getElementById('siteStatusText').textContent = s.enabled ? '🟢 Đang MỞ' : '🔴 Đang TẮT';
+    document.getElementById('stOnline').textContent = s.online.length;
+    document.getElementById('stToday').textContent = s.visitsToday;
+    document.getElementById('stTotal').textContent = s.visitsTotal;
+    const list = document.getElementById('onlineList');
+    list.textContent = '';
+    s.online.forEach(function(o) {
+      const d = document.createElement('div');
+      d.textContent = '• ' + (o.diemBan ? o.vung + ' | ' + o.diemBan : 'Chưa chọn điểm bán') + ' (' + o.giay + ' giây trước)';
+      list.appendChild(d);
+    });
+  }
+
+  function adminDoiTrangThai() {
+    const sw = document.getElementById('siteSwitch');
+    const bat = sw.checked;
+    if (!bat && !confirm('Tắt trang web? Người dùng sẽ không nhập được nữa.')) { sw.checked = true; return; }
+    adminMsg('Đang cập nhật...', true);
+    callPost('adminSetStatus', { token: adminToken, enabled: bat }).then(function(s) {
+      adminMsg('');
+      if (s.enabled) location.reload();
+      else { showLock(); veAdmin(s); }
+    }).catch(function(err) { sw.checked = !bat; adminMsg(err.message); });
   }
 </script>
 </body>
