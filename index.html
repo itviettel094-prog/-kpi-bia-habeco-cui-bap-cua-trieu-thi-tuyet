@@ -5,13 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nhập Sản Lượng</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f4f5f7; margin:0; padding:20px; text-align:center; }
+    :root { --green:#1b8a3a; --green-dark:#14692c; }
+    body { font-family: Arial, sans-serif; background:#f4f5f7; margin:0; padding:20px; text-align:center; color:var(--green); }
     .card { background:#fff; max-width:600px; margin:0 auto; padding:24px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.1); text-align:center; }
-    h2 { margin-top:0; color:#1a2b4c; text-align:center; }
+    h2 { margin-top:0; color:var(--green); text-align:center; }
 
     fieldset { border:1px solid #dde1e6; border-radius:8px; margin-bottom:16px; padding:12px 16px; text-align:center; }
     fieldset.collapsible { padding:0; overflow:hidden; }
-    legend { font-weight:bold; color:#1a2b4c; padding:0 6px; text-align:center; }
+    legend { font-weight:bold; color:var(--green); padding:0 6px; text-align:center; }
+
+    fieldset.bg-blue { background:#dcefff; border-color:#90c2f0; }
+    fieldset.bg-yellow { background:#fff4bf; border-color:#f0d45a; }
 
     .group-header {
       display:flex; align-items:center; justify-content:center; gap:8px;
@@ -19,41 +23,55 @@
     }
     .group-header .arrow {
       display:inline-block; transition: transform .2s ease;
-      font-size:12px; color:#1a2b4c;
+      font-size:12px; color:var(--green);
     }
     .group-header.collapsed .arrow { transform: rotate(-90deg); }
-    .group-title { font-weight:bold; color:#1a2b4c; text-align:center; }
+    .group-title { font-weight:bold; color:var(--green); text-align:center; }
     .group-body { padding:0 16px 16px 16px; }
     .group-body.hidden { display:none; }
 
-    label { display:block; font-size:13px; margin-top:10px; margin-bottom:4px; color:#333; text-align:center; }
+    label { display:block; font-size:13px; margin-top:10px; margin-bottom:4px; color:var(--green); text-align:center; }
     input, select, textarea {
       width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-size:14px;
-      text-align:center;
+      text-align:center; color:var(--green); font-family:inherit;
     }
-    input[readonly] { background:#f0f0f0; color:#555; }
+    input::placeholder, textarea::placeholder { color:var(--green); opacity:.6; }
+    input[readonly] { background:#f0f0f0; color:var(--green); font-weight:bold; }
     textarea { text-align:center; }
 
     .row2 { display:flex; gap:10px; }
     .row2 > div { flex:1; }
 
     button {
-      margin-top:20px; width:100%; padding:12px; background:#1a2b4c; color:#fff;
+      margin-top:20px; width:100%; padding:12px; background:var(--green); color:#fff;
       border:none; border-radius:6px; font-size:15px; cursor:pointer; text-align:center;
     }
     button:disabled { background:#999; }
-    #msg { margin-top:12px; text-align:center; font-size:14px; }
+    #msg { margin-top:12px; text-align:center; font-size:14px; color:var(--green); }
     #existingBanner {
-      display:none; background:#fff8e1; border:1px solid #ffca28; color:#8a6d00;
+      display:none; background:#fff8e1; border:1px solid #ffca28; color:var(--green);
       padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:14px; text-align:center;
     }
     .btn-row { display:flex; gap:10px; }
     .btn-row button { flex:1; }
-    #btnDelete { background:#c62828; display:none; }
+    #btnDelete { background:#c62828; color:#fff; display:none; }
     #btnDelete:disabled { background:#999; }
+
+    /* Toast */
+    #toastWrap { position:fixed; top:16px; left:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+    .toast {
+      background:#fff; color:var(--green); border-left:5px solid var(--green);
+      padding:12px 18px; border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,.2);
+      font-size:14px; font-weight:bold; animation: toastIn .3s ease forwards;
+    }
+    .toast.out { animation: toastOut .4s ease forwards; }
+    @keyframes toastIn { from { transform:translateX(-30px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+    @keyframes toastOut { from { transform:translateX(0); opacity:1; } to { transform:translateX(-120%); opacity:0; } }
   </style>
 </head>
 <body>
+  <div id="toastWrap"></div>
+
   <div class="card">
     <h2>📋 Nhập Sản Lượng Hàng Ngày</h2>
 
@@ -92,7 +110,7 @@
         <input type="number" id="khachTiepCan" min="0" placeholder="Số khách">
       </fieldset>
 
-      <fieldset class="collapsible">
+      <fieldset class="collapsible bg-blue">
         <div class="group-header" onclick="toggleGroup('group-t24')">
           <span class="arrow">▾</span>
           <span class="group-title">Bán - thùng 24</span>
@@ -126,7 +144,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="collapsible">
+      <fieldset class="collapsible bg-yellow">
         <div class="group-header" onclick="toggleGroup('group-qt')">
           <span class="arrow">▾</span>
           <span class="group-title">Quà tặng - lon</span>
@@ -136,14 +154,19 @@
             <div><label>Premium</label><input type="number" id="qt_premium" min="0" value="0"></div>
             <div><label>Sleek 330ml</label><input type="number" id="qt_sleek" min="0" value="0"></div>
           </div>
-          <label>Tổng quà tặng</label>
-          <input type="number" id="tongQuaTang" min="0" value="0">
+          <label>Tổng quà tặng (tự động)</label>
+          <input type="number" id="tongQuaTang" value="0" readonly>
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Ghi chú</legend>
-        <textarea id="ghiChu" rows="2"></textarea>
+      <fieldset class="collapsible">
+        <div class="group-header collapsed" onclick="toggleGroup('group-ghichu')">
+          <span class="arrow">▾</span>
+          <span class="group-title">Ghi chú</span>
+        </div>
+        <div class="group-body hidden" id="group-ghichu">
+          <textarea id="ghiChu" rows="2"></textarea>
+        </div>
       </fieldset>
 
       <div class="btn-row">
@@ -167,6 +190,34 @@
     body.classList.toggle('hidden');
     header.classList.toggle('collapsed');
   }
+
+  function openGroup(id) {
+    const body = document.getElementById(id);
+    body.classList.remove('hidden');
+    body.previousElementSibling.classList.remove('collapsed');
+  }
+
+  // ---- Toast: hiện rồi trượt sang trái và biến mất ----
+  function showToast(text) {
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = text;
+    wrap.appendChild(t);
+    setTimeout(function() {
+      t.classList.add('out');
+      t.addEventListener('animationend', function() { t.remove(); });
+    }, 2500);
+  }
+
+  // ---- Tổng quà tặng = Premium + Sleek 330ml ----
+  function tinhTongQuaTang() {
+    const a = Number(document.getElementById('qt_premium').value || 0);
+    const b = Number(document.getElementById('qt_sleek').value || 0);
+    document.getElementById('tongQuaTang').value = a + b;
+  }
+  document.getElementById('qt_premium').addEventListener('input', tinhTongQuaTang);
+  document.getElementById('qt_sleek').addEventListener('input', tinhTongQuaTang);
 
   function callGet(action, params) {
     const url = new URL(WEB_APP_URL);
@@ -243,7 +294,7 @@
     }
 
     document.getElementById('msg').textContent = 'Đang kiểm tra dữ liệu...';
-    document.getElementById('msg').style.color = '#555';
+    document.getElementById('msg').style.color = '';
 
     callGet('checkExistingData', { ngay: ngay, vung: vung, diemBan: diemBan })
       .then(function(result) {
@@ -274,8 +325,9 @@
     document.getElementById('le_biahoi').value = data.le_biahoi || 0;
     document.getElementById('qt_premium').value = data.qt_premium || 0;
     document.getElementById('qt_sleek').value = data.qt_sleek || 0;
-    document.getElementById('tongQuaTang').value = data.tongQuaTang || 0;
+    tinhTongQuaTang();
     document.getElementById('ghiChu').value = data.ghiChu || '';
+    if (data.ghiChu) openGroup('group-ghichu');
     if (data.diaChi) document.getElementById('diaChi').value = data.diaChi;
 
     document.getElementById('existingBanner').style.display = 'block';
@@ -296,10 +348,12 @@
     const msg = document.getElementById('msg');
     btn.disabled = true;
     msg.textContent = 'Đang gửi...';
-    msg.style.color = '#555';
+    msg.style.color = '';
 
     const val = id => document.getElementById(id).value;
     const num = id => Number(document.getElementById(id).value || 0);
+
+    tinhTongQuaTang();
 
     const formData = {
       rowNumber: existingRowNumber,
@@ -324,10 +378,11 @@
 
     callPost('submitForm', { formData: formData })
       .then(function(result) {
-        msg.style.color = 'green';
-        msg.textContent = result.updated ? '✅ Đã cập nhật dữ liệu thành công!' : '✅ Đã gửi báo cáo thành công!';
+        msg.textContent = '';
+        showToast(result.updated ? '✅ Đã cập nhật dữ liệu thành công!' : '✅ Đã gửi báo cáo thành công!');
         document.getElementById('salesForm').reset();
         document.getElementById('diemBan').innerHTML = '<option value="">-- Chọn Vùng trước --</option>';
+        tinhTongQuaTang();
         resetCheMoHinhThem();
         btn.disabled = false;
       })
@@ -346,14 +401,15 @@
     const msg = document.getElementById('msg');
     btnDelete.disabled = true;
     msg.textContent = 'Đang xóa...';
-    msg.style.color = '#555';
+    msg.style.color = '';
 
     callPost('deleteRow', { rowNumber: existingRowNumber })
       .then(function() {
-        msg.style.color = 'green';
-        msg.textContent = '🗑️ Đã xóa dữ liệu.';
+        msg.textContent = '';
+        showToast('🗑️ Đã xóa dữ liệu.');
         document.getElementById('salesForm').reset();
         document.getElementById('diemBan').innerHTML = '<option value="">-- Chọn Vùng trước --</option>';
+        tinhTongQuaTang();
         resetCheMoHinhThem();
         btnDelete.disabled = false;
       })
