@@ -218,9 +218,9 @@
   function tinhTongQuaTang() {
     
     
-    const soThung = ['t24_premium','t24_sleek','t24_trucbach','t24_biahoi'].reduce(function(s, id) { return s + Number(document.getElementById(id).value || 0); }, 0); const qua = Math.min(soThung, 8); document.getElementById('qt_premium').value = qua; document.getElementById('qt_sleek').value = qua; document.getElementById('tongQuaTang').value = qua * 2;
+    const soThung = ['t24_premium','t24_sleek','t24_trucbach','t24_biahoi'].reduce(function(s, id) { return s + Number(document.getElementById(id).value || 0); }, 0); const loLe = ['le_premium','le_sleek','le_trucbach','le_biahoi'].reduce(function(s, id) { return s + Number(document.getElementById(id).value || 0); }, 0); const qua = Math.min(soThung + Math.floor(loLe / 24), 8); document.getElementById('qt_premium').value = qua; document.getElementById('qt_sleek').value = qua; document.getElementById('tongQuaTang').value = qua * 2;
   }
-  ['t24_premium','t24_sleek','t24_trucbach','t24_biahoi'].forEach(function(id) { document.getElementById(id).addEventListener('input', tinhTongQuaTang); });
+  ['t24_premium','t24_sleek','t24_trucbach','t24_biahoi','le_premium','le_sleek','le_trucbach','le_biahoi'].forEach(function(id) { document.getElementById(id).addEventListener('input', tinhTongQuaTang); });
   
 
   function callGet(action, params) {
