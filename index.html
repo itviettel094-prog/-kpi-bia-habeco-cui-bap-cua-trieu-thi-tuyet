@@ -169,6 +169,10 @@
         </div>
       </fieldset>
 
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-top:16px;">
+        <input type="checkbox" id="giuNguyen" checked style="width:auto;margin:0;">
+        Giữ nguyên Vùng, Điểm bán, Địa chỉ sau khi lưu
+      </label>
       <div class="btn-row">
         <button type="submit" id="submitBtn">Gửi báo cáo</button>
         <button type="button" id="btnDelete" onclick="xoaDuLieu()">Xóa dữ liệu</button>
@@ -380,6 +384,7 @@
       .then(function(result) {
         msg.textContent = '';
         showToast(result.updated ? '✅ Đã cập nhật dữ liệu thành công!' : '✅ Đã gửi báo cáo thành công!');
+        if (document.getElementById('giuNguyen').checked) { giuLaiVaReset(); btn.disabled = false; return; }
         document.getElementById('salesForm').reset();
         document.getElementById('diemBan').innerHTML = '<option value="">-- Chọn Vùng trước --</option>';
         tinhTongQuaTang();
@@ -392,6 +397,22 @@
         btn.disabled = false;
       });
   });
+
+  function giuLaiVaReset() {
+    const vung = document.getElementById('vung').value;
+    const diemBan = document.getElementById('diemBan').value;
+    const diaChi = document.getElementById('diaChi').value;
+
+    document.getElementById('salesForm').reset();
+
+    document.getElementById('vung').value = vung;
+    document.getElementById('diemBan').value = diemBan;
+    document.getElementById('diaChi').value = diaChi;
+    document.getElementById('giuNguyen').checked = true;
+
+    tinhTongQuaTang();
+    resetCheMoHinhThem();
+  }
 
   function xoaDuLieu() {
     if (!existingRowNumber) return;
