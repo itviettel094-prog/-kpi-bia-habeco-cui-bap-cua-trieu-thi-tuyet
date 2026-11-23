@@ -151,8 +151,8 @@
         </div>
         <div class="group-body" id="group-qt">
           <div class="row2">
-            <div><label>Premium</label><input type="number" id="qt_premium" min="0" value="0"></div>
-            <div><label>Sleek 330ml</label><input type="number" id="qt_sleek" min="0" value="0"></div>
+            <div><label>Premium (tự động)</label><input type="number" id="qt_premium" value="0" readonly></div>
+            <div><label>Sleek 330ml (tự động)</label><input type="number" id="qt_sleek" value="0" readonly></div>
           </div>
           <label>Tổng quà tặng (tự động)</label>
           <input type="number" id="tongQuaTang" value="0" readonly>
@@ -210,14 +210,14 @@
     }, 2500);
   }
 
-  // ---- Tổng quà tặng = Premium + Sleek 330ml ----
+  // ---- Quà tặng: mua 1 thùng tặng 2 lon (1 Premium + 1 Sleek 330ml) ----
   function tinhTongQuaTang() {
-    const a = Number(document.getElementById('qt_premium').value || 0);
-    const b = Number(document.getElementById('qt_sleek').value || 0);
-    document.getElementById('tongQuaTang').value = a + b;
+    
+    
+    const soThung = ['t24_premium','t24_sleek','t24_trucbach','t24_biahoi'].reduce(function(s, id) { return s + Number(document.getElementById(id).value || 0); }, 0); document.getElementById('qt_premium').value = soThung; document.getElementById('qt_sleek').value = soThung; document.getElementById('tongQuaTang').value = soThung * 2;
   }
-  document.getElementById('qt_premium').addEventListener('input', tinhTongQuaTang);
-  document.getElementById('qt_sleek').addEventListener('input', tinhTongQuaTang);
+  ['t24_premium','t24_sleek','t24_trucbach','t24_biahoi'].forEach(function(id) { document.getElementById(id).addEventListener('input', tinhTongQuaTang); });
+  
 
   function callGet(action, params) {
     const url = new URL(WEB_APP_URL);
